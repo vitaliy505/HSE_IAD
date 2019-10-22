@@ -45,18 +45,17 @@ def branch_n_bound(var_names, variables, coefficients, lin_constr_args, cur_obje
                 branch_n_bound.bnb_lower_bound = _cur_objective_val
                 branch_n_bound.bnb_variables = _cur_variables
             return
-        # Step 3: find variable with max coefficient to start maximization
+        # Step 3: find variable index with max coefficient to start maximization
         var_w_max_coeff_ind = np.argmax([c for c in [_coefficients[i] for i in real_vars_inds]])
+        var_ind = real_vars_inds[var_w_max_coeff_ind]
 
         # Step 4: find values for future constrains
-        constraint_var1 = int(_variables[var_w_max_coeff_ind])
-        constraint_var2 = int(_variables[var_w_max_coeff_ind]) + 1
+        constraint_var1 = int(_variables[var_ind])
+        constraint_var2 = int(_variables[var_ind]) + 1
 
         # Step 5: solve the first problem with additional constraint and start branching
         lin_constr_args1 = deepcopy(_lin_constr_args)
-        lin_constr_arg = [[[_var_names[var_w_max_coeff_ind]], [1.0]], "L", constraint_var1, "not_unique_name"]
-        for ind, arg in enumerate(lin_constr_args1):
-            arg.append(lin_constr_arg[ind])
+        lin_constr_arg = [[[_var_names[var_ind]], [1.0]], "L", constraint_var1, "not_unique_name"]
         for ind, arg in enumerate(lin_constr_args1):
             arg.append(lin_constr_arg[ind])
         try:
@@ -64,14 +63,12 @@ def branch_n_bound(var_names, variables, coefficients, lin_constr_args, cur_obje
                                                        lin_constr_args1[3])
             _branch_n_bound(var_names, variables1, _coefficients, lin_constr_args1, objective_val1, variables1)
         except Exception as e:
-            if "No solution exists." in repr(e):
-                print(repr(e))
-            else:
+            if "No solution exists." not in repr(e):    # continue if branch has no solution
                 raise
 
         # Step 6: solve the second problem with additional constraint and start branching
         lin_constr_args2 = deepcopy(_lin_constr_args)
-        lin_constr_arg = [[[var_names[var_w_max_coeff_ind]], [1.0]], "G", constraint_var2, "not_unique_name"]
+        lin_constr_arg = [[[var_names[var_ind]], [1.0]], "G", constraint_var2, "not_unique_name"]
         for ind, arg in enumerate(lin_constr_args2):
             arg.append(lin_constr_arg[ind])
         try:
@@ -79,9 +76,7 @@ def branch_n_bound(var_names, variables, coefficients, lin_constr_args, cur_obje
                                                        lin_constr_args2[3])
             _branch_n_bound(var_names, variables2, _coefficients, lin_constr_args2, objective_val2, variables2)
         except Exception as e:
-            if "No solution exists." in repr(e):
-                print(repr(e))
-            else:
+            if "No solution exists." not in repr(e):    # continue if branch has no solution
                 raise
 
     _branch_n_bound(var_names, variables, coefficients, lin_constr_args, cur_objective_val, cur_variables)
