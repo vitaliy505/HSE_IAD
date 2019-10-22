@@ -1,4 +1,8 @@
 import cplex
+import sys
+import logging as log
+log.basicConfig(format="[ %(levelname)s ] %(message)s", level=log.INFO, stream=sys.stdout)
+
 from constants import *
 from branch_n_bound import fill_problem, branch_n_bound
 
@@ -17,18 +21,27 @@ bnb_upper_bound = problem.solution.get_objective_value()
 bnb_lower_bound = -1e+20
 bnb_variables = []
 
-objective_value, variables = branch_n_bound(names, variables, objective,
-                                            [constraints, constraint_senses, rhs, constraint_names], bnb_lower_bound,
-                                            bnb_variables)
-if variables:
-    print("F*: {}\n".format(objective_value))
-
-    print("Variables:")
-    print("x11: {}, x12: {}, x13: {}, x14: {}".format(variables[0], variables[1], variables[2], variables[3]))
-    print("x21: {}, x22: {}, x23: {}, x24: {}".format(variables[4], variables[5], variables[6], variables[7]))
-    print("x31: {}, x32: {}, x33: {}, x34: {}".format(variables[8], variables[9], variables[10], variables[11]))
-    print("y11: {}, y12: {}, y13: {}, y14: {}".format(variables[12], variables[13], variables[14], variables[15]))
-    print("y21: {}, y22: {}, y23: {}, y24: {}".format(variables[16], variables[17], variables[18], variables[19]))
-    print("y31: {}, y32: {}, y33: {}, y34: {}".format(variables[20], variables[21], variables[22], variables[23]))
+real_vars = [var for var in variables if int(var) != var]
+if len(real_vars) == 0:
+    log.info("Solution contains only integer variables. Problem was solved.")
+    objective_value = problem.solution.get_objective_value()
 else:
-    print("Solution wasn't found")
+    log.info("Solution contains float variables. Start 'branch and bound' method to find solution "
+             "with only integer values.")
+    objective_value, variables = branch_n_bound(names, variables, objective,
+                                                [constraints, constraint_senses, rhs, constraint_names],
+                                                bnb_lower_bound,
+                                                bnb_variables)
+    if not variables:
+        log.info("Solution wasn't found.")
+        exit()
+
+log.info("F*: {}\n".format(objective_value))
+
+log.info("Variables:")
+log.info("x11: {}, x12: {}, x13: {}, x14: {}".format(variables[0], variables[1], variables[2], variables[3]))
+log.info("x21: {}, x22: {}, x23: {}, x24: {}".format(variables[4], variables[5], variables[6], variables[7]))
+log.info("x31: {}, x32: {}, x33: {}, x34: {}".format(variables[8], variables[9], variables[10], variables[11]))
+log.info("y11: {}, y12: {}, y13: {}, y14: {}".format(variables[12], variables[13], variables[14], variables[15]))
+log.info("y21: {}, y22: {}, y23: {}, y24: {}".format(variables[16], variables[17], variables[18], variables[19]))
+log.info("y31: {}, y32: {}, y33: {}, y34: {}".format(variables[20], variables[21], variables[22], variables[23]))
